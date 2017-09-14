@@ -1,15 +1,5 @@
 Red Wine Explorations By Xin Ding
 ========================================================
-<!--
-> **Tip**: You will see quoted sections like this throughout the template to
-help you construct your report. Make sure that you remove these notes before
-you finish and submit your project!
-
-> **Tip**: One of the requirements of this project is that your code follows
-good formatting techniques, including limiting your lines to 80 characters or
-less. If you're using RStudio, go into Preferences \> Code \> Display to set up
-a margin line to help you keep track of this guideline!-->
-
 ```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
 # Load all of the packages that you end up using in your analysis in this code
 # chunk.
@@ -40,34 +30,17 @@ redwines<- read.csv("wineQualityReds.csv")
 redwines<- subset(redwines, select = -c(X))
 ```
 
-<!--  
-> **Tip**: Before you create any plots, it is a good idea to provide a short
-introduction into the dataset that you are planning to explore. Replace this
-quoted text with that general information! 
--->
 This report explores a dataset containing qualities and attributes for 
 1599 red wines.
 
 # Univariate Plots Section
-<!--
-> **Tip**: In this section, you should perform some preliminary exploration of
-your dataset. Run some summaries of the data and create univariate plots to
-understand the structure of the individual variables in your dataset. Don't
-forget to add a comment after each plot or closely-related group of plots!
-There should be multiple code chunks and text sections; the first one below is
-just to help you get started.
--->
+
 ```{r echo=FALSE, Univariate_Plots}
 dim(redwines)
 str(redwines)
 summary(redwines)
 ```
-<!--
-> **Tip**: Make sure that you leave a blank line between the start / end of
-each code block and the end / start of your Markdown text so that it is
-formatted nicely in the knitted text. Note as well that text on consecutive
-lines is treated as a single space. Make sure you have a blank line between
-your paragraphs so that they too are formatted for easy readability.-->
+
 Our dataset consists of 12 variables, with almost 1599 observations.
 
 ```{r echo=FALSE,message=FALSE, warning=FALSE}
@@ -208,12 +181,6 @@ confidence level of the data to clean out some outliers.
 
 # Bivariate Plots Section
 
-> **Tip**: Based on what you saw in the univariate plots, what relationships
-between variables might be interesting to look at in this section? Don't limit
-yourself to relationships between a main output feature and one of the
-supporting variables. Try to look at relationships between supporting variables
-as well.
-
 ```{r echo=FALSE, Bivariate_Plots}
 correlation <-cor(redwines)
 round(correlation, 2)
@@ -242,32 +209,32 @@ decide to group the dataset by quality, and take conditional mean of the varible
 for the plot.
 
 ```{r echo=FALSE,message=FALSE, warning=FALSE}
-quality_group<- group_by(redwines, quality)
-quality_group.alcohol<- summarise(quality_group,
-                                  alcohol_mean = mean(alcohol),
-                                  n = n())
-ggplot(data = quality_group.alcohol, aes(x = quality , y =alcohol_mean)) +
-  geom_line()
+modified_redwines <- redwines
+modified_redwines$quality <- ordered(modified_redwines$quality, levels = c(1,2,3,4,5,6,7,8))
+ph_group <- summarise(group_by(modified_redwines, quality),
+                              fixed_acid.mean = mean(fixed.acidity),
+                              ph = mean(pH),
+                              n = n())
+ggplot(data = modified_redwines, aes(x = quality , y =alcohol)) +
+  geom_boxplot()+
+  labs(y ="alcohol (% by volume)")+
+  ggtitle("Alcohol VS Quality")
 ```
 
-Once alcohol perentatge pasts approximately 10.25 pecent, the quality of wine 
-escalates linearly.
+Once alcohol perentatge pasts approximately 10.5 pecent, the quality of wine 
+tends to escalate linearly.
 
 ```{r echo=FALSE,message=FALSE, warning=FALSE}
-quality_group.va<- summarise(quality_group,
-                                  va_mean = mean(volatile.acidity),
-                                  n = n())
-ggplot(data = quality_group.va, aes(x = quality , y =va_mean)) +
-  geom_line()
+ggplot(data = modified_redwines, aes(x = quality , y =volatile.acidity)) +
+  geom_boxplot()+
+  labs(y ="volatile acidity (acetic acid - g / dm^3)")+
+  ggtitle("Volatile acidity VS Quality")
 ```
 
 Sour tasting wines receive low grades.
 
 # Bivariate Analysis
-<!--
-> **Tip**: As before, summarize what you found in your bivariate explorations
-here. Use the questions below to guide your discussion.
--->
+
 ### Talk about some of the relationships you observed in this part of the \
 investigation. How did the feature(s) of interest vary with other features in \
 the dataset?
@@ -284,23 +251,14 @@ From the cor tables, it said the strongest relationship was -.69 between pH and 
 acidity. 
 
 # Multivariate Plots Section
-<!--
-> **Tip**: Now it's time to put everything together. Based on what you found in
-the bivariate plots section, create a few multivariate plots to investigate
-more complex interactions between variables. Make sure that the plots that you
-create here are justified by the plots you explored in the previous section. If
-you plan on creating any mathematical models, this is the section where you
-will do that.
--->
+
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots}
-modified_redwines <- redwines
-modified_redwines$quality <- ordered(modified_redwines$quality, levels = c(1,2,3,4,5,6,7,8))
-ph_group <- summarise(group_by(modified_redwines, quality),
-                              fixed_acid.mean = mean(fixed.acidity),
-                              ph = mean(pH),
-                              n = n())
+
 ggplot(data = modified_redwines, aes(x= pH, y= fixed.acidity))+
-  geom_smooth(aes(color=quality)) 
+  geom_smooth(aes(color=quality)) +
+  scale_colour_brewer(palette = "Blues")+
+  labs(y ="fixed acidity (g / dm^3)")+
+  ggtitle("Fixed acidity VS pH by Quality")
 ```
 
 For better visulazing the relationship between fixed.acidity and pH respected to 
@@ -310,15 +268,19 @@ pH greater than 3.5.
 
 ```{r echo=FALSE,message=FALSE, warning=FALSE}
 ggplot(data = modified_redwines, aes(x= pH, y= volatile.acidity))+
-  geom_smooth(aes(color=quality))
+  geom_smooth(aes(color=quality))+
+  scale_colour_brewer(palette = "Blues")+
+  labs(y ="volatile acidity (acetic acid - g / dm^3)")+
+  ggtitle("Volatile acidity VS pH by Quality")
 ```
 
 ```{r echo=FALSE,message=FALSE, warning=FALSE }
 ggplot(data = modified_redwines, aes(x= density, y= alcohol))+
-  geom_point(aes(color=residual.sugar))+
+  geom_point()+
   stat_smooth(method = "lm", col = "red")+
   facet_wrap(~quality) +
-  ggtitle("facet wrap by quality")
+  ggtitle("facet wrap by quality")+
+  labs(y ="alcohol (% by volume)")
 ```
 
 Alcohol reduces the density, on the contrary that residual sugar from 
@@ -365,10 +327,11 @@ regression model base on the data given.
 ### Plot One
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_One}
 ggplot(data = modified_redwines, aes(x= density, y= alcohol))+
-  geom_point(aes(color=residual.sugar))+
+  geom_point()+
   stat_smooth(method = "lm", col = "red")+
   facet_wrap(~quality) +
-  ggtitle("facet wrap by quality")
+  ggtitle("facet wrap by quality")+
+  labs(y ="alcohol (% by volume)")
 ```
 
 ### Description One
@@ -390,8 +353,10 @@ by their tongues?
 
 ### Plot Two
 ```{r echo=FALSE,message=FALSE, warning=FALSE, Plot_Two}
-ggplot(data = quality_group.alcohol, aes(x = quality , y =alcohol_mean)) +
-  geom_line()
+ggplot(data = modified_redwines, aes(x = quality , y =alcohol)) +
+  geom_boxplot()+
+  labs(y ="alcohol (% by volume)")+
+  ggtitle("Alcohol VS Quality")
 ```
 
 ### Description Two
@@ -404,14 +369,16 @@ with more alcohol.
 
 ### Plot Three
 ```{r echo=FALSE,message=FALSE, warning=FALSE, Plot_Three}
-ggplot(data = quality_group.va, aes(x = quality , y =va_mean)) +
-  geom_line()
+ggplot(data = modified_redwines, aes(x = quality , y =volatile.acidity)) +
+  geom_boxplot()+
+  labs(y ="volatile acidity (acetic acid - g / dm^3)")+
+  ggtitle("Volatile acidity VS Quality")
 ```
 
 ### Description Three
 Another interesting discover here is that people does not like volatile acid. It 
 stimilates our palate with sourness. You don't want a vinegar taste wine.
-------
+
 
 # Reflection
 The red wines data set contains information on 1599 wines across twelve 
@@ -426,10 +393,9 @@ accurate analysis. By picking the most correlated varibles, I plotted several
 graphs to tell a story. According to cor table, the highest correlations were 
 between quality and alcohol, between quality and volatile acid are 0.48 and 
 -0.39 respectively.They were still fairly weak, but we knew where to start now. 
-I grouped the data by quality, took a conditional mean on alcohol and volatile 
-acid, then I plotted them on the graphs, they appeared to be linear. The 
-conclusion was that wine quality increases when there is more alcohol and less
-aetic acid in it. Finally, I made a linear model based on all chemicals included 
+I drew boxplots using quality versus alcohol and volatile acid. The conclusion 
+was that wine quality increases when there is more alcohol and less aetic acid 
+in it. Finally, I made a linear model based on all chemicals included 
 in the wine even though I knew at the beginning it would not be a practical 
 model. It was still worth a shot.
 
@@ -437,3 +403,8 @@ limitations of this model include data source. Given that at least 3 wine
 experts rated the quality of each wine, providing a rating between 0 and 10 , 
 results could be very bias since wine tasting is highly depending on experts'
 personal judgements, not the universal standard.
+
+For future analysis on red wines, a data set includes pubilc grading through 
+blind testing is recommended. Compared to the wine experts judgement, a 
+generalized data is relatively unbias. As a reference, we can figure out if 
+public agrees that higher score wine graded by experts tastes better.
